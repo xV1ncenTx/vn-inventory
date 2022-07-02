@@ -50,6 +50,7 @@ Here's my own take and spin on the design. This is was made off the awesome inve
 * [qb-shops](https://github.com/qbcore-framework/qb-shops)
 
 # How to install vn-inventory
-* Download source files from github
-* Drag source files into your resources folder
+* Download the zip file
+* Unpack the zip file
+* Drag the folder into your resources folder
 * Rename folder to `vn-inventory`
