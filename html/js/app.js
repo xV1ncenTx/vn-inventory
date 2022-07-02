@@ -1,3 +1,31 @@
+const { useQuasar } = Quasar
+const { ref } = Vue
+
+const app = Vue.createApp({
+  setup () {
+    return {
+        options: ref(false),
+        help: ref(false),
+        showblur: ref(false),
+    }
+  },
+  methods: {
+    select: function(event) {
+        targetId = event.currentTarget.id;
+        showBlur()
+    }
+}
+})
+
+
+
+app.use(Quasar, { config: {} })
+app.mount('#inventory-menus')
+
+function showBlur() {
+    $.post('https://vn-inventory/showBlur');
+}
+
 var InventoryOption = "0, 0, 0";
 
 var totalWeight = 0;
@@ -41,7 +69,7 @@ $(document).on("dblclick", ".item-slot", function(e) {
     if (ItemData) {
         Inventory.Close();
         $.post(
-            "https://aj-inventory/UseItem",
+            "https://vn-inventory/UseItem",
             JSON.stringify({
                 inventory: ItemInventory,
                 item: ItemData,
@@ -159,7 +187,7 @@ $(document).on("click", ".item-slot", function(e) {
                 if (!$("#weapon-attachments").length) {
                     // if (ItemData.info.attachments !== null && ItemData.info.attachments !== undefined && ItemData.info.attachments.length > 0) {
                     $(".inv-options-list").append(
-                        '<div class="inv-option-item" id="weapon-attachments"><p>ATTACHMENTS</p></div>'
+                        '<div class="inv-option-item" id="weapon-attachments"><p>Attachments</p></div>'
                     );
                     $("#weapon-attachments").hide().fadeIn(250);
                     ClickedItemData = ItemData;
@@ -224,7 +252,7 @@ $(document).on("click", ".weapon-attachments-back", function(e) {
 
 function FormatAttachmentInfo(data) {
     $.post(
-        "https://aj-inventory/GetWeaponData",
+        "https://vn-inventory/GetWeaponData",
         JSON.stringify({
             weapon: data.name,
             ItemData: ClickedItemData,
@@ -325,7 +353,7 @@ function handleAttachmentDrag() {
         hoverClass: "weapon-attachments-remove-hover",
         drop: function(event, ui) {
             $.post(
-                "https://aj-inventory/RemoveAttachment",
+                "https://vn-inventory/RemoveAttachment",
                 JSON.stringify({
                     AttachmentData: AttachmentDraggingData,
                     WeaponData: ClickedItemData,
@@ -393,7 +421,7 @@ $(document).on("click", "#weapon-attachments", function(e) {
         FormatAttachmentInfo(ClickedItemData);
     } else {
         $.post(
-            "https://aj-inventory/Notify",
+            "https://vn-inventory/Notify",
             JSON.stringify({
                 message: "Attachments are unavailable for this gun.",
                 type: "error",
@@ -433,6 +461,25 @@ function FormatItemInfo(itemData, dom) {
                 gender +
                 "</span></p><p><strong>Nationality: </strong><span>" +
                 itemData.info.nationality +
+                "</span></p>"
+            );
+        } else if (itemData.name == "huntinglicence") {
+            var gender = "Man";
+            if (itemData.info.gender == 1) {
+                gender = "Woman";
+            }
+            $(".item-info-title").html("<p>" + itemData.label + "</p>");
+            $(".item-info-description").html(
+                "<p><strong>CSN: </strong><span>" +
+                itemData.info.citizenid +
+                "</span></p><p><strong>First Name: </strong><span>" +
+                itemData.info.firstname +
+                "</span></p><p><strong>Last Name: </strong><span>" +
+                itemData.info.lastname +
+                "</span></p><p><strong>Birth Date: </strong><span>" +
+                itemData.info.birthdate +
+                "</span></p><p><strong>Gender: </strong><span>" +
+                gender +
                 "</span></p>"
             );
         } else if (itemData.name == "driver_license") {
@@ -566,6 +613,7 @@ function FormatItemInfo(itemData, dom) {
                     "</span></p><br /><p>" +
                     itemData.description +
                     "</p>"
+                    
                 );
             }
         } else if (
@@ -591,6 +639,12 @@ function FormatItemInfo(itemData, dom) {
                 itemData.info.worth +
                 "</span></p>"
             );
+        } else if (itemData.name == "visa" || itemData.name == "mastercard") {
+            $(".item-info-title").html('<p>'+itemData.label+'</p>')
+            var str = ""+ itemData.info.cardNumber + "";
+            var res = str.slice(12);
+            var cardNumber = "************" + res;
+            $(".item-info-description").html('<p><strong>Card Holder: </strong><span>' + itemData.info.name + '</span></p><p><strong>Citizen ID: </strong><span>' + itemData.info.citizenid + '</span></p><p><strong>Card Number: </strong><span>' + cardNumber + '</span></p>');
         } else if (itemData.name == "labkey") {
             $(".item-info-title").html("<p>" + itemData.label + "</p>");
             $(".item-info-description").html("<p>Lab: " + itemData.info.lab + "</p>");
@@ -602,6 +656,7 @@ function FormatItemInfo(itemData, dom) {
         $(".item-info-title").html("<p>" + itemData.label + "</p>");
         $(".item-info-description").html("<p>" + itemData.description + "</p>");
     }
+    
 }
 
 function handleDragDrop() {
@@ -627,23 +682,23 @@ function handleDragDrop() {
 
             if (dragAmount == 0) {
                 if (itemData.price != null) {
-                    $(this).find(".item-slot-amount p").html("0 (0.0)");
+                    $(this).find(".item-slot-amount p").html("0");
                     $(".ui-draggable-dragging")
                         .find(".item-slot-amount p")
-                        .html("(" + itemData.amount + ") $" + itemData.price);
+                        .html(" " + itemData.amount + " $" + itemData.price);
                     $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
                         // $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     }
                 } else {
-                    $(this).find(".item-slot-amount p").html("0 (0.0)");
+                    $(this).find(".item-slot-amount p").html("0");
                     $(".ui-draggable-dragging")
                         .find(".item-slot-amount p")
                         .html(
                             itemData.amount +
-                            " (" +
-                            ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                            ")"
+                            " " +
+                            
+                            " "
                         );
                     $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
@@ -654,7 +709,7 @@ function handleDragDrop() {
                 if (itemData.price != null) {
                     $(this)
                         .find(".item-slot-amount p")
-                        .html("(" + itemData.amount + ") $" + itemData.price);
+                        .html(" " + itemData.amount + " $" + itemData.price);
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
                         // $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     }
@@ -663,9 +718,9 @@ function handleDragDrop() {
                         .find(".item-slot-amount p")
                         .html(
                             itemData.amount +
-                            " (" +
-                            ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                            ")"
+                            " " +
+                            
+                            " "
                         );
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
                         // $(".ui-draggable-dragging").find(".item-slot-key").remove();
@@ -676,10 +731,10 @@ function handleDragDrop() {
                 if (itemData.price != null) {
                     $(this)
                         .find(".item-slot-amount p")
-                        .html("(" + itemData.amount + ") $" + itemData.price);
+                        .html(" " + itemData.amount + " $" + itemData.price);
                     $(".ui-draggable-dragging")
                         .find(".item-slot-amount p")
-                        .html("(" + itemData.amount + ") $" + itemData.price);
+                        .html(" " + itemData.amount + " $" + itemData.price);
                     $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
                         // $(".ui-draggable-dragging").find(".item-slot-key").remove();
@@ -690,26 +745,35 @@ function handleDragDrop() {
                         .html(
                             itemData.amount -
                             dragAmount +
-                            " (" +
+                            " " +
                             (
                                 (itemData.weight * (itemData.amount - dragAmount)) /
                                 1000
                             ).toFixed(1) +
-                            ")"
+                            " "
                         );
                     $(".ui-draggable-dragging")
                         .find(".item-slot-amount p")
                         .html(
                             dragAmount +
-                            " (" +
-                            ((itemData.weight * dragAmount) / 1000).toFixed(1) +
-                            ")"
+                            " " +
+                            
+                            " "
                         );
                     $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     if ($(this).parent().attr("data-inventory") == "hotbar") {
                         // $(".ui-draggable-dragging").find(".item-slot-key").remove();
                     }
                 }
+            } else if (itemData.name == "vehiclekey") {
+                $(".item-info-title").html(
+                    '<p>' + itemData.info.vehname + '</p>'
+                );
+                $(".item-info-description").html(
+                    '<p>Owner : ' + itemData.info.owner +
+                    '</p><p>Plate: ' + itemData.info.plate +
+                    '</p>'
+                );
             } else {
                 if ($(this).parent().attr("data-inventory") == "hotbar") {
                     // $(".ui-draggable-dragging").find(".item-slot-key").remove();
@@ -719,9 +783,9 @@ function handleDragDrop() {
                     .find(".item-slot-amount p")
                     .html(
                         itemData.amount +
-                        " (" +
-                        ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                        ")"
+                        " " +
+                        
+                        " "
                     );
                 InventoryError($(this).parent(), $(this).attr("data-slot"));
             }
@@ -774,7 +838,7 @@ function handleDragDrop() {
                     Inventory.Close();
                 }
                 $.post(
-                    "https://aj-inventory/UseItem",
+                    "https://vn-inventory/UseItem",
                     JSON.stringify({
                         inventory: fromInventory,
                         item: fromData,
@@ -798,7 +862,7 @@ function handleDragDrop() {
             }
             $(this).css("background", "rgba(35,35,35, 0.7");
             $.post(
-                "https://aj-inventory/DropItem",
+                "https://vn-inventory/DropItem",
                 JSON.stringify({
                     inventory: fromInventory,
                     item: fromData,
@@ -847,9 +911,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.image +
                     '" alt="' +
                     itemData.name +
-                    '" /></div><div class="item-slot-amount"><p>(' +
+                    '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    ") $" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " $" +
                     itemData.price +
                     '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
@@ -865,9 +930,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.name +
                     '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    " (" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " " +
                     ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                    ')</p></div><div class="item-slot-label"><p>' +
+                    '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
                     "</p></div>"
                 );
@@ -891,9 +957,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.image +
                     '" alt="' +
                     itemData.name +
-                    '" /></div><div class="item-slot-amount"><p>(' +
+                    '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    ") $" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " $" +
                     itemData.price +
                     '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
@@ -909,9 +976,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.name +
                     '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    " (" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " " +
                     ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                    ')</p></div><div class="item-slot-label"><p>' +
+                    '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
                     "</p></div>"
                 );
@@ -934,9 +1002,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.image +
                     '" alt="' +
                     itemData.name +
-                    '" /></div><div class="item-slot-amount"><p>(' +
+                    '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    ") $" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " $" +
                     itemData.price +
                     '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
@@ -952,9 +1021,10 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     itemData.name +
                     '" /></div><div class="item-slot-amount"><p>' +
                     itemData.amount +
-                    " (" +
+                    '</div><div class="item-slot-name"><p>' +
+                    " " +
                     ((itemData.weight * itemData.amount) / 1000).toFixed(1) +
-                    ')</p></div><div class="item-slot-label"><p>' +
+                    '</p></div><div class="item-slot-label"><p>' +
                     itemData.label +
                     "</p></div>"
                 );
@@ -1014,9 +1084,9 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
     var per =(totalWeight/1000)/(playerMaxWeight/100000)
     $(".pro").css("width",per+"%")
     $("#player-inv-weight").html(
-        // "⚖️: " +
+        '<i class="fas fa-dumbbell"></i> ' +
         (parseInt(totalWeight) / 1000).toFixed(2) +
-        " / " +
+        "/" +
         (playerMaxWeight / 1000).toFixed(2)
     );
     if (
@@ -1027,9 +1097,9 @@ function updateweights($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
     ) {
         $("#other-inv-label").html(otherLabel);
         $("#other-inv-weight").html(
-            // "⚖️: " +
+            '<i class="fas fa-dumbbell"></i> ' +
             (parseInt(totalWeightOther) / 1000).toFixed(2) +
-            " / " +
+            "/" +
             (otherMaxWeight / 1000).toFixed(2)
         );
         var per1 =(totalWeightOther/1000)/(otherMaxWeight/100000)
@@ -1045,7 +1115,7 @@ $(document).on("click", ".CombineItem", function(e) {
     e.preventDefault();
     if (combineslotData.toData.combinable.anim != null) {
         $.post(
-            "https://aj-inventory/combineWithAnim",
+            "https://vn-inventory/combineWithAnim",
             JSON.stringify({
                 combineData: combineslotData.toData.combinable,
                 usedItem: combineslotData.toData.name,
@@ -1054,7 +1124,7 @@ $(document).on("click", ".CombineItem", function(e) {
         );
     } else {
         $.post(
-            "https://aj-inventory/combineItem",
+            "https://vn-inventory/combineItem",
             JSON.stringify({
                 reward: combineslotData.toData.combinable.reward,
                 toItem: combineslotData.toData.name,
@@ -1108,9 +1178,10 @@ function optionSwitch(
                 fromData.name +
                 '" /></div><div class="item-slot-amount"><p>' +
                 fromData.amount +
-                " (" +
+                '</div><div class="item-slot-name"><p>' +
+                " " +
                 ((fromData.weight * fromData.amount) / 1000).toFixed(1) +
-                ')</p></div><div class="item-slot-label"><p>' +
+                '</p></div><div class="item-slot-label"><p>' +
                 fromData.label +
                 "</p></div>"
             );
@@ -1124,9 +1195,10 @@ function optionSwitch(
                 fromData.name +
                 '" /></div><div class="item-slot-amount"><p>' +
                 fromData.amount +
-                " (" +
+                '</div><div class="item-slot-name"><p>' +
+                " " +
                 ((fromData.weight * fromData.amount) / 1000).toFixed(1) +
-                ')</p></div><div class="item-slot-label"><p>' +
+                '</p></div><div class="item-slot-label"><p>' +
                 fromData.label +
                 "</p></div>"
             );
@@ -1151,9 +1223,10 @@ function optionSwitch(
                 toData.name +
                 '" /></div><div class="item-slot-amount"><p>' +
                 toData.amount +
-                " (" +
+                '</div><div class="item-slot-name"><p>' +
+                " " +
                 ((toData.weight * toData.amount) / 1000).toFixed(1) +
-                ')</p></div><div class="item-slot-label"><p>' +
+                '</p></div><div class="item-slot-label"><p>' +
                 toData.label +
                 "</p></div>"
             );
@@ -1167,16 +1240,17 @@ function optionSwitch(
                 toData.name +
                 '" /></div><div class="item-slot-amount"><p>' +
                 toData.amount +
-                " (" +
+                '</div><div class="item-slot-name"><p>' +
+                " " +
                 ((toData.weight * toData.amount) / 1000).toFixed(1) +
-                ')</p></div><div class="item-slot-label"><p>' +
+                '</p></div><div class="item-slot-label"><p>' +
                 toData.label +
                 "</p></div>"
             );
     }
 
     $.post(
-        "https://aj-inventory/SetInventoryData",
+        "https://vn-inventory/SetInventoryData",
         JSON.stringify({
             fromInventory: $fromInv.attr("data-inventory"),
             toInventory: $toInv.attr("data-inventory"),
@@ -1273,9 +1347,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else if ($toSlot == 41 && $toInv.attr("data-inventory") == "player") {
@@ -1288,9 +1363,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else {
@@ -1303,9 +1379,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 }
@@ -1315,13 +1392,13 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         if (newData.info.quality == undefined) {
                             newData.info.quality = 100.0;
                         }
-                        var QualityColor = "rgb(39, 174, 96)";
+                        var QualityColor = "rgb(15, 255, 213)";
                         if (newData.info.quality < 25) {
                             QualityColor = "rgb(192, 57, 43)";
                         } else if (newData.info.quality > 25 && newData.info.quality < 50) {
                             QualityColor = "rgb(230, 126, 34)";
                         } else if (newData.info.quality >= 50) {
-                            QualityColor = "rgb(39, 174, 96)";
+                            QualityColor = "rgb(15, 255, 213)";
                         }
                         if (newData.info.quality !== undefined) {
                             qualityLabel = newData.info.quality.toFixed();
@@ -1395,9 +1472,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else if ($toSlot == 41 && $toInv.attr("data-inventory") == "player") {
@@ -1410,9 +1488,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else {
@@ -1425,9 +1504,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newData.weight * newData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 }
@@ -1437,13 +1517,13 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         if (newData.info.quality == undefined) {
                             newData.info.quality = 100.0;
                         }
-                        var QualityColor = "rgb(39, 174, 96)";
+                        var QualityColor = "rgb(15, 255, 213)";
                         if (newData.info.quality < 25) {
                             QualityColor = "rgb(192, 57, 43)";
                         } else if (newData.info.quality > 25 && newData.info.quality < 50) {
                             QualityColor = "rgb(230, 126, 34)";
                         } else if (newData.info.quality >= 50) {
-                            QualityColor = "rgb(39, 174, 96)";
+                            QualityColor = "rgb(15, 255, 213)";
                         }
                         if (newData.info.quality !== undefined) {
                             qualityLabel = newData.info.quality.toFixed();
@@ -1483,9 +1563,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newDataFrom.image +
                             '" alt="' +
                             newDataFrom.name +
-                            '" /></div><div class="item-slot-amount"><p>(' +
+                            '" /></div><div class="item-slot-amount"><p>' +
                             newDataFrom.amount +
-                            ") $" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " $" +
                             newDataFrom.price +
                             '</p></div><div class="item-slot-label"><p>' +
                             newDataFrom.label +
@@ -1517,11 +1598,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else if (
@@ -1537,11 +1619,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else {
@@ -1554,11 +1637,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     }
@@ -1568,7 +1652,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             if (newDataFrom.info.quality == undefined) {
                                 newDataFrom.info.quality = 100.0;
                             }
-                            var QualityColor = "rgb(39, 174, 96)";
+                            var QualityColor = "rgb(15, 255, 213)";
                             if (newDataFrom.info.quality < 25) {
                                 QualityColor = "rgb(192, 57, 43)";
                             } else if (
@@ -1577,7 +1661,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             ) {
                                 QualityColor = "rgb(230, 126, 34)";
                             } else if (newDataFrom.info.quality >= 50) {
-                                QualityColor = "rgb(39, 174, 96)";
+                                QualityColor = "rgb(15, 255, 213)";
                             }
                             if (newDataFrom.info.quality !== undefined) {
                                 qualityLabel = newDataFrom.info.quality.toFixed();
@@ -1600,9 +1684,9 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     }
                 }
             }
-            $.post("https://aj-inventory/PlayDropSound", JSON.stringify({}));
+            $.post("https://vn-inventory/PlayDropSound", JSON.stringify({}));
             $.post(
-                "https://aj-inventory/SetInventoryData",
+                "https://vn-inventory/SetInventoryData",
                 JSON.stringify({
                     fromInventory: $fromInv.attr("data-inventory"),
                     toInventory: $toInv.attr("data-inventory"),
@@ -1619,7 +1703,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     isItemAllowed(fromData.name, toData.combinable.accept)
                 ) {
                     $.post(
-                        "https://aj-inventory/getCombineItem",
+                        "https://vn-inventory/getCombineItem",
                         JSON.stringify({ item: toData.combinable.reward }),
                         function(item) {
                             $(".combine-option-text").html(
@@ -1671,9 +1755,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             fromData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             fromData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((fromData.weight * fromData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else if ($toSlot == 41 && $toInv.attr("data-inventory") == "player") {
@@ -1686,9 +1771,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             fromData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             fromData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((fromData.weight * fromData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else {
@@ -1701,9 +1787,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             fromData.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             fromData.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((fromData.weight * fromData.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 }
@@ -1713,7 +1800,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         if (fromData.info.quality == undefined) {
                             fromData.info.quality = 100.0;
                         }
-                        var QualityColor = "rgb(39, 174, 96)";
+                        var QualityColor = "rgb(15, 255, 213)";
                         if (fromData.info.quality < 25) {
                             QualityColor = "rgb(192, 57, 43)";
                         } else if (
@@ -1722,7 +1809,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         ) {
                             QualityColor = "rgb(230, 126, 34)";
                         } else if (fromData.info.quality >= 50) {
-                            QualityColor = "rgb(39, 174, 96)";
+                            QualityColor = "rgb(15, 255, 213)";
                         }
                         if (fromData.info.quality !== undefined) {
                             qualityLabel = fromData.info.quality.toFixed();
@@ -1777,9 +1864,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 toData.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 toData.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((toData.weight * toData.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else if (
@@ -1795,9 +1883,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 toData.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 toData.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((toData.weight * toData.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else {
@@ -1810,9 +1899,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 toData.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 toData.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((toData.weight * toData.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     }
@@ -1822,13 +1912,13 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             if (toData.info.quality == undefined) {
                                 toData.info.quality = 100.0;
                             }
-                            var QualityColor = "rgb(39, 174, 96)";
+                            var QualityColor = "rgb(15, 255, 213)";
                             if (toData.info.quality < 25) {
                                 QualityColor = "rgb(192, 57, 43)";
                             } else if (toData.info.quality > 25 && toData.info.quality < 50) {
                                 QualityColor = "rgb(230, 126, 34)";
                             } else if (toData.info.quality >= 50) {
-                                QualityColor = "rgb(39, 174, 96)";
+                                QualityColor = "rgb(15, 255, 213)";
                             }
                             if (toData.info.quality !== undefined) {
                                 qualityLabel = toData.info.quality.toFixed();
@@ -1851,7 +1941,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     }
 
                     $.post(
-                        "https://aj-inventory/SetInventoryData",
+                        "https://vn-inventory/SetInventoryData",
                         JSON.stringify({
                             fromInventory: $fromInv.attr("data-inventory"),
                             toInventory: $toInv.attr("data-inventory"),
@@ -1897,7 +1987,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                     }
 
                     $.post(
-                        "https://aj-inventory/SetInventoryData",
+                        "https://vn-inventory/SetInventoryData",
                         JSON.stringify({
                             fromInventory: $fromInv.attr("data-inventory"),
                             toInventory: $toInv.attr("data-inventory"),
@@ -1907,7 +1997,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         })
                     );
                 }
-                $.post("https://aj-inventory/PlayDropSound", JSON.stringify({}));
+                $.post("https://vn-inventory/PlayDropSound", JSON.stringify({}));
             } else if (
                 fromData.amount > $toAmount &&
                 (toData == undefined || toData == null)
@@ -1953,9 +2043,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newDataTo.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newDataTo.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newDataTo.weight * newDataTo.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else if ($toSlot == 41 && $toInv.attr("data-inventory") == "player") {
@@ -1968,9 +2059,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newDataTo.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newDataTo.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newDataTo.weight * newDataTo.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 } else {
@@ -1983,9 +2075,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newDataTo.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             newDataTo.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((newDataTo.weight * newDataTo.amount) / 1000).toFixed(1) +
-                            ")</p></div>" +
+                            "</p></div>" +
                             ItemLabel
                         );
                 }
@@ -1995,7 +2088,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         if (newDataTo.info.quality == undefined) {
                             newDataTo.info.quality = 100.0;
                         }
-                        var QualityColor = "rgb(39, 174, 96)";
+                        var QualityColor = "rgb(15, 255, 213)";
                         if (newDataTo.info.quality < 25) {
                             QualityColor = "rgb(192, 57, 43)";
                         } else if (
@@ -2004,7 +2097,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         ) {
                             QualityColor = "rgb(230, 126, 34)";
                         } else if (newDataTo.info.quality >= 50) {
-                            QualityColor = "rgb(39, 174, 96)";
+                            QualityColor = "rgb(15, 255, 213)";
                         }
                         if (newDataTo.info.quality !== undefined) {
                             qualityLabel = newDataTo.info.quality.toFixed();
@@ -2057,9 +2150,10 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             newDataFrom.image +
                             '" alt="' +
                             newDataFrom.name +
-                            '" /></div><div class="item-slot-amount"><p>(' +
+                            '" /></div><div class="item-slot-amount"><p>' +
                             newDataFrom.amount +
-                            ") $" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " $" +
                             newDataFrom.price +
                             '</p></div><div class="item-slot-label"><p>' +
                             newDataFrom.label +
@@ -2091,11 +2185,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else if (
@@ -2111,11 +2206,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else {
@@ -2128,11 +2224,12 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                                 newDataFrom.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 newDataFrom.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((newDataFrom.weight * newDataFrom.amount) / 1000).toFixed(
                                     1
                                 ) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     }
@@ -2142,7 +2239,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             if (newDataFrom.info.quality == undefined) {
                                 newDataFrom.info.quality = 100.0;
                             }
-                            var QualityColor = "rgb(39, 174, 96)";
+                            var QualityColor = "rgb(15, 255, 213)";
                             if (newDataFrom.info.quality < 25) {
                                 QualityColor = "rgb(192, 57, 43)";
                             } else if (
@@ -2151,7 +2248,7 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                             ) {
                                 QualityColor = "rgb(230, 126, 34)";
                             } else if (newDataFrom.info.quality >= 50) {
-                                QualityColor = "rgb(39, 174, 96)";
+                                QualityColor = "rgb(15, 255, 213)";
                             }
                             if (newDataFrom.info.quality !== undefined) {
                                 qualityLabel = newDataFrom.info.quality.toFixed();
@@ -2173,9 +2270,9 @@ function swap($fromSlot, $toSlot, $fromInv, $toInv, $toAmount) {
                         }
                     }
                 }
-                $.post("https://aj-inventory/PlayDropSound", JSON.stringify({}));
+                $.post("https://vn-inventory/PlayDropSound", JSON.stringify({}));
                 $.post(
-                    "https://aj-inventory/SetInventoryData",
+                    "https://vn-inventory/SetInventoryData",
                     JSON.stringify({
                         fromInventory: $fromInv.attr("data-inventory"),
                         toInventory: $toInv.attr("data-inventory"),
@@ -2214,7 +2311,7 @@ function InventoryError($elinv, $elslot) {
             .find("[data-slot=" + $elslot + "]")
             .css("background", "rgba(255, 255, 255, 0.3)");
     }, 500);
-    $.post("https://aj-inventory/PlayDropFail", JSON.stringify({}));
+    $.post("https://vn-inventory/PlayDropFail", JSON.stringify({}));
 }
 
 var requiredItemOpen = false;
@@ -2229,7 +2326,7 @@ var requiredItemOpen = false;
     Inventory.dropmaxweight = 100000;
 
     Inventory.Error = function() {
-        $.post("https://aj-inventory/PlayDropFail", JSON.stringify({}));
+        $.post("https://vn-inventory/PlayDropFail", JSON.stringify({}));
     };
 
     Inventory.IsWeaponBlocked = function(WeaponName) {
@@ -2253,13 +2350,13 @@ var requiredItemOpen = false;
                 if (item.info.quality == undefined) {
                     item.info.quality = 100;
                 }
-                var QualityColor = "rgb(39, 174, 96)";
+                var QualityColor = "rgb(15, 255, 213)";
                 if (item.info.quality < 25) {
                     QualityColor = "rgb(192, 57, 43)";
                 } else if (item.info.quality > 25 && item.info.quality < 50) {
                     QualityColor = "rgb(230, 126, 34)";
                 } else if (item.info.quality >= 50) {
-                    QualityColor = "rgb(39, 174, 96)";
+                    QualityColor = "rgb(15, 255, 213)";
                 }
                 if (item.info.quality !== undefined) {
                     qualityLabel = item.info.quality.toFixed();
@@ -2437,9 +2534,10 @@ var requiredItemOpen = false;
                                 item.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                         $(".player-inventory")
@@ -2458,9 +2556,10 @@ var requiredItemOpen = false;
                                 item.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                         $(".player-inventory")
@@ -2479,9 +2578,10 @@ var requiredItemOpen = false;
                                 item.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                         $(".player-inventory")
@@ -2522,9 +2622,10 @@ var requiredItemOpen = false;
                                 item.image +
                                 '" alt="' +
                                 item.name +
-                                '" /></div><div class="item-slot-amount"><p>(' +
+                                '" /></div><div class="item-slot-amount"><p>' +
                                 item.amount +
-                                ") $" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " $" +
                                 item.price +
                                 "</p></div>" +
                                 ItemLabel
@@ -2539,9 +2640,10 @@ var requiredItemOpen = false;
                                 item.name +
                                 '" /></div><div class="item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="item-slot-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     }
@@ -2556,9 +2658,9 @@ var requiredItemOpen = false;
         var per =(totalWeight/1000)/(data.maxweight/100000)
         $(".pro").css("width",per+"%");
         $("#player-inv-weight").html(
-            // "⚖️: " +
+            '<i class="fas fa-dumbbell"></i> ' +
             (totalWeight / 1000).toFixed(2) +
-            " / " +
+            "/" +
             (data.maxweight / 1000).toFixed(2)
         );
         playerMaxWeight = data.maxweight;
@@ -2572,9 +2674,9 @@ var requiredItemOpen = false;
             } else {
                 $("#other-inv-label").html(data.other.label);
                 $("#other-inv-weight").html(
-                    // "⚖️: " +
+                    '<i class="fas fa-dumbbell"></i> ' +
                     (totalWeightOther / 1000).toFixed(2) +
-                    " / " +
+                    "/" +
                     (data.other.maxweight / 1000).toFixed(2)
                 );
             }
@@ -2585,9 +2687,9 @@ var requiredItemOpen = false;
         } else {
             $("#other-inv-label").html(Inventory.droplabel);
             $("#other-inv-weight").html(
-                // "⚖️: " +
+                '<i class="fas fa-dumbbell"></i> ' +
                 (totalWeightOther / 1000).toFixed(2) +
-                " / " +
+                "/" +
                 (Inventory.dropmaxweight / 1000).toFixed(2)
             );
             otherMaxWeight = Inventory.dropmaxweight;
@@ -2634,7 +2736,7 @@ var requiredItemOpen = false;
         if ($("#rob-money").length) {
             $("#rob-money").remove();
         }
-        $.post("https://aj-inventory/CloseInventory", JSON.stringify({}));
+        $.post("https://vn-inventory/CloseInventory", JSON.stringify({}));
 
         if (AttachmentScreenActive) {
             $("#qbcore-inventory").css({ left: "0vw" });
@@ -2692,9 +2794,10 @@ var requiredItemOpen = false;
                             item.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             item.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((item.weight * item.amount) / 1000).toFixed(1) +
-                            ')</p></div><div class="item-slot-label"><p>' +
+                            '</p></div><div class="item-slot-label"><p>' +
                             item.label +
                             "</p></div>"
                         );
@@ -2714,9 +2817,10 @@ var requiredItemOpen = false;
                             item.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             item.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((item.weight * item.amount) / 1000).toFixed(1) +
-                            ')</p></div><div class="item-slot-label"><p>' +
+                            '</p></div><div class="item-slot-label"><p>' +
                             item.label +
                             "</p></div>"
                         );
@@ -2736,9 +2840,10 @@ var requiredItemOpen = false;
                             item.name +
                             '" /></div><div class="item-slot-amount"><p>' +
                             item.amount +
-                            " (" +
+                            '</div><div class="item-slot-name"><p>' +
+                            " " +
                             ((item.weight * item.amount) / 1000).toFixed(1) +
-                            ')</p></div><div class="item-slot-label"><p>' +
+                            '</p></div><div class="item-slot-label"><p>' +
                             item.label +
                             "</p></div>"
                         );
@@ -2752,9 +2857,9 @@ var requiredItemOpen = false;
         var per =(totalWeight/1000)/(data.maxweight/100000)
         $(".pro").css("width",per+"%");
         $("#player-inv-weight").html(
-            // "⚖️: " +
+            '<i class="fas fa-dumbbell"></i> ' +
             (totalWeight / 1000).toFixed(2) +
-            " / " +
+            "/" +
             (data.maxweight / 1000).toFixed(2)
         );
 
@@ -2774,7 +2879,7 @@ var requiredItemOpen = false;
                 $(".z-hotbar-inventory").append(elem);
             }
             var elem =
-                '<div class="z-hotbar-item-slot" data-zhotbarslot="41"> <div class="z-hotbar-item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"></div><div class="z-hotbar-item-slot-label"><p>&nbsp;</p></div></div>';
+                '<div class="z-hotbar-item-slot" data-zhotbarslot="41"> <div class="z-hotbar-item-slot-key"><p>6 <i style="top: -30px; left: 18px;" class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"></div><div class="z-hotbar-item-slot-label"><p>&nbsp;</p></div></div>';
             $(".z-hotbar-inventory").append(elem);
             $.each(data.items, function(i, item) {
                 if (item != null) {
@@ -2792,15 +2897,16 @@ var requiredItemOpen = false;
                         $(".z-hotbar-inventory")
                             .find("[data-zhotbarslot=" + item.slot + "]")
                             .html(
-                                '<div class="z-hotbar-item-slot-key"><p>6 <i class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"><img src="images/' +
+                                '<div class="z-hotbar-item-slot-key"><p>6 <i style="top: -62px; left: 58px;" class="fas fa-lock"></i></p></div><div class="z-hotbar-item-slot-img"><img src="images/' +
                                 item.image +
                                 '" alt="' +
                                 item.name +
                                 '" /></div><div class="z-hotbar-item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="z-hotbar-item-slot-amount-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     } else {
@@ -2815,9 +2921,10 @@ var requiredItemOpen = false;
                                 item.name +
                                 '" /></div><div class="z-hotbar-item-slot-amount"><p>' +
                                 item.amount +
-                                " (" +
+                                '</div><div class="z-hotbar-item-slot-amount-name"><p>' +
+                                " " +
                                 ((item.weight * item.amount) / 1000).toFixed(1) +
-                                ")</p></div>" +
+                                "</p></div>" +
                                 ItemLabel
                             );
                     }
@@ -2835,7 +2942,7 @@ var requiredItemOpen = false;
     Inventory.UseItem = function(data) {
         $(".itembox-container").hide();
         $(".itembox-container").fadeIn(250);
-        $("#itembox-action").html("<p>Used x1</p>");
+        $("#itembox-action").html("<p>Used 1x</p>");
         $("#itembox-label").html("<p>" + data.item.label + "</p>");
         $("#itembox-image").html(
             '<div class="item-slot-img"><img src="images/' +
@@ -2856,11 +2963,11 @@ var requiredItemOpen = false;
         if (itemBoxtimer !== null) {
             clearTimeout(itemBoxtimer);
         }
-        var type = "Used x1";
+        var type = "Used " + data.itemAmount + "x";
         if (data.type == "add") {
-            type = "Received";
+          type = "Received " + data.itemAmount + "x";
         } else if (data.type == "remove") {
-            type = "Removed";
+          type = "Removed " + data.itemAmount + "x";
         }
 
         var $itembox = $(".itembox-container.template").clone();
@@ -2870,7 +2977,7 @@ var requiredItemOpen = false;
             type +
             '</p></div><div id="itembox-label"><p>' +
             data.item.label +
-            '</p></div><div class="item-slot-img"><img src="images/' +
+            '</p></div><div class="item-slot-img-itembox"><img src="images/' +
             data.item.image +
             '" alt="' +
             data.item.name +
@@ -2952,7 +3059,7 @@ $(document).on("click", "#rob-money", function(e) {
     e.preventDefault();
     var TargetId = $(this).data("TargetId");
     $.post(
-        "https://aj-inventory/RobMoney",
+        "https://vn-inventory/RobMoney",
         JSON.stringify({
             TargetId: TargetId,
         })
@@ -2975,7 +3082,7 @@ $("#item-give").droppable({
             amount = fromData.amount;
         }
         $.post(
-            "https://aj-inventory/GiveItem",
+            "https://vn-inventory/GiveItem",
             JSON.stringify({
                 inventory: fromInventory,
                 item: fromData,
@@ -2984,3 +3091,4 @@ $("#item-give").droppable({
         );
     },
 });
+
