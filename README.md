@@ -32,8 +32,8 @@ Here's my own take and spin on the design. This is was made off the awesome inve
 ![hotbar slots](https://cdn.discordapp.com/attachments/914259977370210415/992836015444217956/unknown.png)
 ### used & removed itembox 
 ![used & removed itembox](https://cdn.discordapp.com/attachments/914259977370210415/992831103008247908/unknown.png)
-### glove box and weight bar
-![glove box and weight bar](https://cdn.discordapp.com/attachments/914259977370210415/992831174810533928/unknown.png)
+### glove/trunk and weight bar
+![glove/trunk and weight bar](https://cdn.discordapp.com/attachments/914259977370210415/992831174810533928/unknown.png)
 
 # Credits
 * ihyajb (Aj) for [original version](https://github.com/ihyajb/aj-inventory)
@@ -50,6 +50,7 @@ Here's my own take and spin on the design. This is was made off the awesome inve
 * [qb-shops](https://github.com/qbcore-framework/qb-shops)
 
 # How to install vn-inventory
-* Download source files from github
-* Drag source files into your resources folder
+* Download the zip file
+* Unpack the zip file
+* Drag the folder into your resources folder
 * Rename folder to `vn-inventory`
